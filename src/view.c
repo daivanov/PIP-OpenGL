@@ -17,8 +17,10 @@
  * License along with PIP-OpenGL. If not, see http://www.gnu.org/licenses/.
  */
 
-#include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 #include <GL/glut.h>
 
 #include "view.h"
@@ -26,13 +28,22 @@
 #define SIZE_X 4000.0
 #define SIZE_Y 3000.0
 
+static GLfloat uniformRandom(GLfloat min, GLfloat max)
+{
+    return random() / (GLfloat)RAND_MAX * (max - min) + min;
+}
+
 static void drawPolygon(void)
 {
+    const GLint num = 10;
     glBegin(GL_LINE_LOOP);
-    glVertex2f(50., 50.);
-    glVertex2f(SIZE_X - 50., 50.);
-    glVertex2f(SIZE_X - 50, SIZE_Y - 50);
-    glVertex2f(0., SIZE_Y - 50);
+    GLfloat step = 2 * M_PI / num;
+    for (GLfloat angle = .0; angle < 2 * M_PI; angle += step) {
+        GLfloat angleDeviation = uniformRandom(-step/2, step/2);
+        GLfloat radiusDeviation = uniformRandom(-0.4, 0.4);
+        glVertex2f(2000. * (1 + (0.5 + radiusDeviation) * sin(angle + angleDeviation)),
+                   1500. * (1 + (0.5 + radiusDeviation) * cos(angle + angleDeviation)));
+    }
     glEnd();
 }
 
@@ -53,10 +64,10 @@ static void reshape(GLint newWidth, GLint newHeight)
     glViewport(0, 0, newWidth, newHeight);
     glLoadIdentity();
     if (newWidth > newHeight) {
-        GLdouble dx = SIZE_X * ((GLdouble)newWidth / newHeight - 1.0) / 2;
+        GLfloat dx = SIZE_X * ((GLfloat)newWidth / newHeight - 1.0) / 2;
         glOrtho(-dx, SIZE_X + dx, 0.0, SIZE_Y, -1.0, 1.0);
     } else {
-        GLdouble dy = SIZE_Y * ((GLdouble)newHeight / newWidth - 1.0) / 2;
+        GLfloat dy = SIZE_Y * ((GLfloat)newHeight / newWidth - 1.0) / 2;
         glOrtho(0.0, SIZE_X, -dy, SIZE_Y + dy, -1.0, 1.0);
     }
 }
@@ -64,6 +75,9 @@ static void reshape(GLint newWidth, GLint newHeight)
 View *view_init(int argc, char **argv)
 {
     View *view = calloc(1, sizeof(view));
+
+    unsigned int curr_time = (unsigned int)time(NULL);
+    srandom(curr_time);
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH);
