@@ -17,11 +17,14 @@
  * License along with PIP-OpenGL. If not, see http://www.gnu.org/licenses/.
  */
 
-#ifndef CURVEFITTER_H
-#define CURVEFITTER_H
+#ifndef VIEW_H
+#define VIEW_H
+
+#include <GL/glut.h>
 
 typedef struct {
-    int refCount;
+    GLint size;
+    GLfloat *polygon;
 } View;
 
 /* Constructor */

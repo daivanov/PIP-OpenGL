@@ -21,12 +21,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <GL/glut.h>
 
 #include "view.h"
 
 #define SIZE_X 4000.0
 #define SIZE_Y 3000.0
+
+static View *self = 0;
 
 static GLfloat uniformRandom(GLfloat min, GLfloat max)
 {
@@ -35,16 +36,12 @@ static GLfloat uniformRandom(GLfloat min, GLfloat max)
 
 static void drawPolygon(void)
 {
-    const GLint num = 10;
-    glBegin(GL_LINE_LOOP);
-    GLfloat step = 2 * M_PI / num;
-    for (GLfloat angle = .0; angle < 2 * M_PI; angle += step) {
-        GLfloat angleDeviation = uniformRandom(-step/2, step/2);
-        GLfloat radiusDeviation = uniformRandom(-0.4, 0.4);
-        glVertex2f(2000. * (1 + (0.5 + radiusDeviation) * sin(angle + angleDeviation)),
-                   1500. * (1 + (0.5 + radiusDeviation) * cos(angle + angleDeviation)));
+    if (self) {
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < self->size; ++i)
+            glVertex2f(self->polygon[2 * i], self->polygon[2 * i + 1]);
+        glEnd();
     }
-    glEnd();
 }
 
 static void display(void)
@@ -74,10 +71,21 @@ static void reshape(GLint newWidth, GLint newHeight)
 
 View *view_init(int argc, char **argv)
 {
-    View *view = calloc(1, sizeof(view));
-
     unsigned int curr_time = (unsigned int)time(NULL);
     srandom(curr_time);
+
+    View *view = calloc(1, sizeof(view));
+    view->size = 10;
+    view->polygon = calloc(2 * view->size, sizeof(GLfloat));
+    GLfloat step = 2 * M_PI / view->size;
+    for (int i = 0; i < view->size; ++i) {
+        GLfloat angleDeviation = uniformRandom(-step/2, step/2);
+        GLfloat radiusDeviation = uniformRandom(-0.4, 0.4);
+        view->polygon[2 *i] = 2000. *
+            (1 + (0.5 + radiusDeviation) * sin(step * i + angleDeviation));
+        view->polygon[2 *i + 1] = 1500. *
+            (1 + (0.5 + radiusDeviation) * cos(step * i + angleDeviation));
+    }
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DEPTH);
@@ -99,6 +107,7 @@ View *view_init(int argc, char **argv)
     glutDisplayFunc(display);
     glutReshapeFunc(reshape);
 
+    self = view;
     return view;
 }
 
@@ -109,8 +118,11 @@ void view_run(View *view)
 
 View *deinit_view(View *view)
 {
-    if (view)
+    if (view) {
+        if (view->polygon)
+            free(view->polygon);
         free(view);
+    }
 
     return NULL;
 }
